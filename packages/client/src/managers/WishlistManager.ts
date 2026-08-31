@@ -16,9 +16,9 @@ export class WishlistManager extends BaseManager {
 	public async count(): Promise<number> {
 		this.authenticated();
 
-		const { data } = await this.client.resource(`${this.base}?limit=0`);
+		const response = await this.client.request(`${this.base}?limit=0`);
 
-		return data['total_count'];
+		return response.denormalized[response.id].data['total_count'] as number;
 	}
 
 	public async add(product: Product): Promise<boolean>;

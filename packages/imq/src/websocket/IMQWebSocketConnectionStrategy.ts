@@ -14,7 +14,10 @@ export class IMQWebSocketConnectionStrategy extends IMQConnectionStrategy {
 
 		this.url = config.url ?? 'wss://imq.imvu.com:444/streaming/imvu_pre';
 
-		this.socketFactory = config.socketFactory ?? globalThis.WebSocket;
+		// Default to the `ws` package implementation. Node >= 21 exposes a
+		// built-in globalThis.WebSocket, but it is NOT an EventEmitter and
+		// cannot be wrapped by IMQWebSocketStream.
+		this.socketFactory = config.socketFactory ?? WebSocket;
 	}
 
 	connect() {

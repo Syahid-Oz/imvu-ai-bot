@@ -5,6 +5,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "start": "ts-node -T -P tsconfig.base.json src/index.ts",
+    "check:ai": "ts-node -T -P tsconfig.base.json scripts/check-ai.ts",
+    "check:room": "ts-node -T -P tsconfig.base.json scripts/room-listen.ts",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --build",
     "build:esm": "npm run -ws build:esm",
@@ -44,6 +47,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@imvu/client": "^0.1.0",
     "dotenv": "^16.0.3"
   }
 }

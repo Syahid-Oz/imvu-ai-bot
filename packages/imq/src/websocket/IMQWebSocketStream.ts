@@ -43,8 +43,8 @@ export class IMQWebSocketStream extends IMQStream {
 		this.emit('open', this.socket);
 	};
 
-	private onMessage = () => {
-		this.emit('message', this.socket);
+	private onMessage = (data: any) => {
+		this.emit('message', { data });
 	};
 
 	private onError = () => {

@@ -22,6 +22,14 @@
     "experimentalDecorators": true,
     "downlevelIteration": true
   },
+  "ts-node": {
+    "transpileOnly": true,
+    "moduleTypes": {
+      "packages/**/*.ts": "cjs",
+      "src/**/*.ts": "cjs",
+      "scripts/**/*.ts": "cjs"
+    }
+  },
   "exclude": [
     "node_modules"
   ]

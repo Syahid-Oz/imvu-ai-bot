@@ -16,7 +16,7 @@ import { Utilities } from './Utilities';
  * The main client for interacting with the IMVU API controllers.
  */
 export class Client extends EventEmitter {
-	protected username = '';
+	protected _username = '';
 	protected password = '';
 	protected sauce = '';
 	protected cid = 0;
@@ -43,6 +43,10 @@ export class Client extends EventEmitter {
 				validateStatus: () => true,
 			})
 		);
+	}
+
+	public get username(): string {
+		return this._username;
 	}
 
 	public readonly users = new BaseController<User, { username?: string }>(this, 'user', User);
@@ -95,7 +99,7 @@ export class Client extends EventEmitter {
 			});
 		}
 
-		this.username = username;
+		this._username = username;
 		this.password = password;
 
 		// Set up the "sauce", basically a JSON authentication token

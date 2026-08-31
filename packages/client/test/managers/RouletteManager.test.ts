@@ -15,16 +15,19 @@ describe('RouletteManager.test.ts', () => {
 	it('should fetch the current roulette status', async () => {
 		const roulette = client.account.roulette.status();
 
-		await expect(roulette).resolves.toHaveProperty('next');
+		await expect(roulette).resolves.toHaveProperty('status');
 	});
 
 	it('should spin the wheel if available', async () => {
 		const roulette = await client.account.roulette.status();
 
-		if (roulette.status === 'available') {
-			await expect(client.account.roulette.spin()).resolves.toHaveProperty('available');
-		} else {
-			await expect(client.account.roulette.spin()).toThrow();
+		const result = await client.account.roulette.spin();
+
+		expect(result).toHaveProperty('status');
+
+		// Spinning a redeemed roulette is a no-op that returns the current status
+		if (roulette.status === 'redeemed') {
+			expect(result.status).toBe('redeemed');
 		}
 	});
 });

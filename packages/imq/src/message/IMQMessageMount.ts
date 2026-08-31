@@ -8,10 +8,12 @@ export class IMQMessageMount extends EventEmitter {
 
 	public handleMessage(m: any) {
 		this.emit('message', {
-			user_id: m.user_id,
+			user_id: m.user_id ?? m.userId,
+			message: m.message,
+			text: m.text,
 			queue: this.queue.name,
 			mount: this.name,
-			op_id: m.op_id,
+			op_id: m.op_id ?? m.opId,
 		});
 	}
 

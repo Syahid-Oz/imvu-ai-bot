@@ -29,7 +29,7 @@ describe('Client.test.ts', () => {
 		await client.login(IMVU_USERNAME, IMVU_PASSWORD, { socket: false });
 
 		expect(client.account).toBeInstanceOf(AccountManager);
-		expect(client.account.username.toLowerCase()).toEqual(IMVU_USERNAME.toLowerCase());
+		expect(client.username.toLowerCase()).toEqual(IMVU_USERNAME.toLowerCase());
 
 		await client.logout();
 	});
@@ -37,6 +37,6 @@ describe('Client.test.ts', () => {
 	test('Account unset when retrieving Account without authentication', async () => {
 		const client = new Client();
 
-		expect(client.account).toBeUndefined();
+		expect(() => client.account).toThrow('You must be logged into to access account information!');
 	});
 });

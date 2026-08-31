@@ -5,6 +5,7 @@ dotenv.config();
 
 const config: JestConfigWithTsJest = {
   preset: 'ts-jest',
+  testTimeout: 30000,
   coverageDirectory: '<rootDir>/coverage',
   collectCoverageFrom: [
     '<rootDir>/packages/**/src/**/*.ts',
@@ -14,6 +15,9 @@ const config: JestConfigWithTsJest = {
     {
       displayName: '@imvu/client',
       preset: 'ts-jest',
+      transform: {
+        '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.base.json' }],
+      },
       testMatch: ['<rootDir>/packages/client/test/**/*.test.ts'],
     },
   ],

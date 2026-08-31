@@ -1,3 +1,5 @@
+import { EventEmitter } from 'events';
+
 import { IMQConnection, Status } from './IMQConnection';
 import { IMQQueue } from './message/IMQQueue';
 
@@ -9,7 +11,7 @@ const STATUS = {
 	[Status.AUTHENTICATING]: 'authenticating',
 } as const;
 
-export class IMQManager {
+export class IMQManager extends EventEmitter {
 	private connection: IMQConnection;
 	private messageOpId = 0;
 
@@ -25,6 +27,7 @@ export class IMQManager {
 	public queues: Map<string, IMQQueue> = new Map();
 
 	public constructor(private config: any) {
+		super();
 		this.connection = new IMQConnection(config);
 
 		this.connection.on('state', (state: any) => {
@@ -34,6 +37,10 @@ export class IMQManager {
 		this.connection.on('message', (message: any) => {
 			this.onMessage(message);
 		});
+	}
+
+	public get status(): string {
+		return this.state.status;
 	}
 
 	public async connect(callback?: any): Promise<void> {
@@ -142,6 +149,8 @@ export class IMQManager {
 			connectAt: connectAt ?? this.state.connectAt,
 		};
 
+		this.emit('state', this.state.status);
+
 		if (status === Status.AUTHENTICATED) {
 			this.queues.forEach((queue) => {
 				this.send('msg_c2g_subscribe', [queue.name]);
@@ -157,7 +166,17 @@ export class IMQManager {
 
 	private subscribeQueue(name: string, callback: any, c: any) {
 		if (!this.queues.has(name)) {
-			this.send('msg_c2g_subscribe', [name]);
+			const subscription = {
+				record: 'subscription',
+				name,
+				op_id: this.messageOpId++,
+			};
+
+			this.send('msg_c2g_subscribe', [subscription], (error?: string) => {
+				if (error) {
+					console.error(`IMQ subscribe error for queue "${name}": ${error}`);
+				}
+			});
 		}
 
 		c(null, callback(this.getOrCreateQueue(name)));
@@ -180,7 +199,13 @@ export class IMQManager {
 	}
 
 	private _unsubscribeQueue(name: string, callback: (err: string) => void) {
-		this.send('msg_c2g_unsubscribe', [name], callback);
+		const subscription = {
+			record: 'subscription',
+			name,
+			op_id: this.messageOpId++,
+		};
+
+		this.send('msg_c2g_unsubscribe', [subscription], callback);
 	}
 
 	private onMessage(message: any) {
@@ -188,7 +213,8 @@ export class IMQManager {
 
 		switch (type) {
 			case 'msg_g2c_result':
-				this.receiveOpId(data.opId, data.error);
+				// Wire events are snake_case; accept both spellings.
+				this.receiveOpId(data.op_id ?? data.opId, data.error ?? data.error_message);
 				break;
 			case 'msg_g2c_left_queue':
 			case 'msg_g2c_joined_queue':
@@ -218,10 +244,12 @@ export class IMQManager {
 
 	private send(type: string, b: any, c?: any) {
 		if (this.connection.status === Status.AUTHENTICATED) {
-			this.connection.send(type, b, b.op_id);
-			if (c && b.op_id) {
+			const opId = b?.op_id ?? (Array.isArray(b) ? b[0]?.op_id : undefined);
+
+			this.connection.send(type, b, opId);
+			if (c && opId !== undefined && opId !== null) {
 				this.messageCallbacks.push({
-					op_id: b.op_id,
+					opId,
 					function: c,
 				});
 			}
@@ -239,12 +267,15 @@ export class IMQManager {
 	}
 
 	private receiveOpId(opId: number, error?: string) {
-		let c = null;
-		if (opId) {
-			c = this.messageCallbacks.find((c) => c.opId === opId);
+		if (opId === undefined || opId === null) {
+			return;
 		}
 
-		this.handleCallback(c.function, error);
+		const c = this.messageCallbacks.find((c) => c.opId === opId);
+
+		if (c) {
+			this.handleCallback(c.function, error);
+		}
 	}
 
 	private receiveQueue(queue: string, action: 'joined' | 'left', userId: string) {

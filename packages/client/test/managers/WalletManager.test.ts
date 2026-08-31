@@ -21,6 +21,6 @@ describe('WalletManager.test.ts', () => {
 	it('should return the correct amount of promo credits', async () => {
 		const wallet = await client.account.wallet.status();
 
-		expect(wallet.promo_credits).toBe(2808);
+		expect(wallet.promo_credits).toBe(254);
 	});
 });

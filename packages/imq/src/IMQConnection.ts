@@ -20,6 +20,9 @@ export class IMQConnection extends EventEmitter {
 	private stream?: IMQStream;
 	private state = Status.CLOSED;
 
+	/** Log raw IMQ frames when IMQ_DEBUG=1 (cookies are masked). */
+	private debug = process.env.IMQ_DEBUG === '1' || process.env.IMQ_DEBUG === 'true';
+
 	private connectRetryTimerHandle?: Timeout;
 	private connectRetryIntervalIndex = 0;
 	private currentStrategyIndex = 0;
@@ -37,6 +40,10 @@ export class IMQConnection extends EventEmitter {
 			((d: any) => {
 				d(null, null);
 			});
+
+		if (!this.config.strategies) {
+			this.config.strategies = [new IMQWebSocketConnectionStrategy(this.config)];
+		}
 
 		this.config.pingInterval = this.config.pingInterval || 15e3;
 		this.config.reconnect = this.config.reconnect ?? [5e3, 15e3, 45e3, 9e4, 18e4];
@@ -71,7 +78,7 @@ export class IMQConnection extends EventEmitter {
 
 		this.strategy = this.config.strategies[this.currentStrategyIndex++];
 
-		console.log(`Connecting to IMQ via '${this.strategy.url}' as user '${this.config.user}'`);
+		console.log(`Connecting to IMQ via '${this.strategy.url}'`);
 
 		this.stream = this.strategy.connect();
 		this.stream.on('open', () => this.onOpen());
@@ -102,33 +109,52 @@ export class IMQConnection extends EventEmitter {
 				user_id: this.config.userId,
 				cookie: this.config.sessionId,
 				metadata: this.config.metadata,
+				op_id: this.config.connectOpId ?? 0,
 			})
 		);
 	}
 
-	private onMessage(message: MessageEvent) {
+	private onMessage(message: any) {
 		this.scheduleServerTimeout();
 		this.lastMessageTime = Date.now();
 
-		const event = this.strategy.decode(message.data);
+		if (this.debug) {
+			const raw = Buffer.isBuffer(message?.data)
+				? message.data.toString('utf8')
+				: typeof message?.data === 'string'
+					? message.data
+					: JSON.stringify(message?.data);
+			console.log(`[imq<] ${String(raw).slice(0, 900)}`);
+		}
 
-		if (this.status === Status.AUTHENTICATING) {
-			if (event.type === 'msg_g2c_result') {
-				if (!event.data.error) {
-					console.log('IMQ authenticated');
+		const events = this.strategy.decode(message?.data);
 
-					this._send('msg_c2g_open_floodgates', {});
-					this.onAuthenticated();
-				} else {
-					console.log(`Failed to authenticate with IMQ: ${event.data.error}`);
-				}
-			} else {
-				console.log(`unexpected message type during IMQ authentication: ${event.type}`);
-
-				this.onDisconnected();
+		for (const event of events) {
+			if (!event) {
+				continue;
 			}
-		} else if (event.type !== 'msg_g2c_pong') {
-			this.emit('message', event);
+
+			if (this.status === Status.AUTHENTICATING) {
+				if (event.type === 'msg_g2c_result') {
+					if (event.data?.status === 0) {
+						console.log('IMQ authenticated');
+
+						this._send('msg_c2g_open_floodgates', {});
+						this.onAuthenticated();
+					} else {
+						console.log(
+							`Failed to authenticate with IMQ: ${event.data?.error_message ?? event.data?.status}`
+						);
+					}
+				} else {
+					console.log(`unexpected message type during IMQ authentication: ${event.type}`);
+
+					this.onDisconnected();
+					return;
+				}
+			} else if (event.type !== 'msg_g2c_pong') {
+				this.emit('message', event);
+			}
 		}
 	}
 
@@ -212,7 +238,15 @@ export class IMQConnection extends EventEmitter {
 	) {
 		this.schedulePing();
 
-		this.stream?.send(this.strategy.encode(record, event));
+		const encoded = this.strategy.encode(record, event);
+
+		if (this.debug) {
+			// Never log the session cookie.
+			const safe = record === 'msg_c2g_connect' ? encoded.replace(/("cookie":")[^"]*(")/, '$1***$2') : encoded;
+			console.log(`[imq>] ${safe.slice(0, 900)}`);
+		}
+
+		this.stream?.send(encoded);
 	}
 
 	private scheduleServerTimeout() {

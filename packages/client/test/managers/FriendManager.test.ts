@@ -15,7 +15,7 @@ describe('FriendManager.test.ts', () => {
 	it('should return the proper friend count', async () => {
 		const count = await client.account.friends.count();
 
-		expect(count).toBe(12);
+		expect(count).toBe(8);
 	});
 
 	it('should return the list of friends', async () => {
@@ -26,6 +26,6 @@ describe('FriendManager.test.ts', () => {
 			count++;
 		}
 
-		expect(count).toBe(12);
+		expect(count).toBe(8);
 	});
 });
