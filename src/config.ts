@@ -86,9 +86,9 @@ export function getConfig(): BotConfig {
 		aiBaseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, ''),
 		aiModel: process.env.AI_MODEL || 'gpt-4o-mini',
 
-		botName: process.env.BOT_NAME?.trim() || 'Shirah',
+		botName: process.env.BOT_NAME?.trim() || 'your_bot_name',
 
-		ownerName: process.env.OWNER_NAME?.trim() || '4imie',
+		ownerName: process.env.OWNER_NAME?.trim() || 'your_owner_name',
 		ownerId: process.env.OWNER_ID?.trim() || '',
 
 		autoReplyInbox: process.env.AUTO_REPLY_INBOX?.trim().toLowerCase() !== 'false',
