@@ -82,8 +82,8 @@ npm start
 |----------|---------|-------------|
 | `IMVU_2FA_CODE` | *(none)* | 2FA code if account has 2FA |
 | `AI_PERSONA` | `a friendly and helpful IMVU assistant` | Bot's personality description |
-| `BOT_NAME` | `Shirah` | Name users must mention to trigger reply |
-| `OWNER_NAME` | `4imie` | Owner name for user support |
+| `BOT_NAME` | `BotName` | Name users must mention to trigger reply |
+| `OWNER_NAME` | `AdminName` | Owner name for user support |
 | `OWNER_ID` | *(none)* | Owner's IMVU user ID |
 | `AUTO_REPLY_INBOX` | `true` | Auto-reply to private messages |
 | `AUTO_ACCEPT_FRIENDS` | `true` | Auto-accept friend requests |
