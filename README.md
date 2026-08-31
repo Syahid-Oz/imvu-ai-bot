@@ -47,10 +47,10 @@ AI_MODEL=minimax/minimax-m3:free
 
 # Bot personality & name
 AI_PERSONA=a friendly and helpful IMVU assistant
-BOT_NAME=Shirah
+BOT_NAME=Bot_Name
 
 # Owner info (users can contact if bot doesn't understand)
-OWNER_NAME=4imie
+OWNER_NAME=IMVU_UserID
 
 # Auto features
 AUTO_REPLY_INBOX=true
@@ -149,7 +149,7 @@ While the bot is running, you can use these commands:
 
 ### Room Chat
 1. Bot joins the configured IMVU room
-2. Listens for messages that mention the bot's name (e.g., "hey Shirah")
+2. Listens for messages that mention the bot's name (e.g., "hey bot_name")
 3. Sends the message to the configured AI provider
 4. Replies with the AI-generated response in the room
 
@@ -192,7 +192,7 @@ npm run check:room
 If the bot doesn't understand something or users need help, it can redirect them to the owner. Configure these in `.env`:
 
 ```env
-OWNER_NAME=4imie        # Your IMVU username
+OWNER_NAME=             # Your IMVU username
 OWNER_ID=               # Your IMVU user ID (optional)
 ```
 
